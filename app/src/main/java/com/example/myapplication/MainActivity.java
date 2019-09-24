@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
 
-    //  输入logt，利用tab会自动补全当前的类名
+    //  输入logt，利用tab会自动补全当前的类名。更新
     private static final String TAG = "MainActivity";
     //  main activity
     @Override
