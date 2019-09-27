@@ -13,7 +13,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_demo);
 
         //  打印日志的功能，必须学会习惯使用
         //  在Logcat栏显示，可以通过筛选重要级别和关键字（例如类名以分类）来查看
