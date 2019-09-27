@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_demo"
+    android:theme="@android:style/Theme.NoTitleBar"
     >
 
     <androidx.constraintlayout.widget.Guideline
@@ -65,11 +66,11 @@
         app:layout_constraintGuide_percent="0.75" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/hgl_0.85"
+        android:id="@+id/hgl_0.70"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.85" />
+        app:layout_constraintGuide_percent="0.70" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vgl_0.05"
@@ -91,6 +92,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="09/27\n2019"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@+id/hgl_0.05"
         app:layout_constraintBottom_toTopOf="@+id/hgl_0.15"
@@ -104,6 +106,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="北京·大兴"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@+id/hgl_0.05"
         app:layout_constraintBottom_toTopOf="@+id/hgl_0.15"
@@ -117,6 +120,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="FRI"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@+id/hgl_0.05"
         app:layout_constraintBottom_toTopOf="@+id/hgl_0.15"
@@ -140,6 +144,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="27°"
+        android:textSize="50dp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/hgl_0.20"
         app:layout_constraintBottom_toTopOf="@id/hgl_0.30"
@@ -152,6 +157,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="晴"
+        android:textSize="30dp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/hgl_0.30"
         app:layout_constraintBottom_toTopOf="@id/hgl_0.40"
@@ -164,6 +170,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="16~30°"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintLeft_toRightOf="@id/vgl_0.05"
         app:layout_constraintRight_toLeftOf="@id/vgl_0.95"
@@ -175,6 +182,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="晴转多云"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintLeft_toRightOf="@id/vgl_0.05"
         app:layout_constraintRight_toLeftOf="@id/vgl_0.95"
@@ -186,11 +194,12 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:text="西风3~4级"
+        android:textSize="20dp"
         android:gravity="center"
         app:layout_constraintLeft_toRightOf="@id/vgl_0.05"
         app:layout_constraintRight_toLeftOf="@id/vgl_0.95"
         app:layout_constraintTop_toBottomOf="@id/tv_demo_weather"
-        app:layout_constraintBottom_toTopOf="@id/hgl_0.85"
+        app:layout_constraintBottom_toTopOf="@id/hgl_0.70"
         />
 
 
