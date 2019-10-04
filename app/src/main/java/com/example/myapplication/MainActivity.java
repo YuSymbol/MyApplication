@@ -10,6 +10,7 @@ import android.widget.Toast;
 import com.example.myapplication.util.HttpUtil;
 import com.google.gson.Gson;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -20,6 +21,8 @@ import java.util.Date;
 
 import interfaces.heweather.com.interfacesmodule.bean.Lang;
 import interfaces.heweather.com.interfacesmodule.bean.Unit;
+import interfaces.heweather.com.interfacesmodule.bean.weather.forecast.Forecast;
+import interfaces.heweather.com.interfacesmodule.bean.weather.forecast.ForecastBase;
 import interfaces.heweather.com.interfacesmodule.bean.weather.now.Now;
 import interfaces.heweather.com.interfacesmodule.view.HeConfig;
 import interfaces.heweather.com.interfacesmodule.view.HeWeather;
@@ -34,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView dateTv;
     private TextView locationTv;
     private TextView weekdayTv;
+    private TextView windTv;
+    private TextView tempTv;
+
     private TextView testTv;
     private final String KEY = "69f2cb642a1646379bdb680390c377c7";  //  访问天气API的key
     private final String DAXING_ID = "CN101011100"; //  大兴区的id
@@ -76,10 +82,12 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         //  将SDK的请求天气方法放在start环节调用
-        requestWeatherInfoBySDK(DAXING_ID);
+//        requestWeatherNowBySDK(DAXING_ID);
+        requestWeatherDailyBySDK(DAXING_ID);
     }
 
-    private void requestWeatherInfoBySDK(String cityId){
+    //  通过SDK读取即时天气
+    private void requestWeatherNowBySDK(String cityId){
 
         /**
          * 实况天气
@@ -94,11 +102,11 @@ public class MainActivity extends AppCompatActivity {
         HeWeather.getWeatherNow(MainActivity.this, cityId, Lang.CHINESE_SIMPLIFIED,
                 Unit.METRIC, new HeWeather.OnResultWeatherNowBeanListener() {
 
-                    public static final String TAG = "WeatherNow";
+            public static final String TAG = "WeatherNow";
                     @Override
                     public void onError(Throwable throwable) {
                         Log.i(TAG, "on Error: ", throwable);
-                        System.out.println("Weather now error: "+new Gson());
+                        System.out.println("Weather Now Error: "+new Gson());
                     }
 
                     @Override
@@ -114,7 +122,10 @@ public class MainActivity extends AppCompatActivity {
                             JSONObject jsonObject = null;
                             try {
                                 jsonObject = new JSONObject(jsonNow);
+
+                                //  读取即时天气
                                 weather = jsonObject.getString("cond_txt");
+                                //  读取即时温度
                                 temp = jsonObject.getString("tmp");
                             } catch (JSONException e){
                                 e.printStackTrace();
@@ -129,6 +140,59 @@ public class MainActivity extends AppCompatActivity {
                 });
 
     }
+
+    //  通过SDK读取近日天气
+    private void requestWeatherDailyBySDK(String cityId){
+
+
+        HeWeather.getWeatherForecast(MainActivity.this, cityId, Lang.CHINESE_SIMPLIFIED,
+                Unit.METRIC, new HeWeather.OnResultWeatherForecastBeanListener() {
+
+            public static final String TAG = "WeatherDaily";
+                    @Override
+                    public void onError(Throwable throwable) {
+                        Log.i(TAG, "on Error: ", throwable);
+                        System.out.println("Weather Daily Error: "+new Gson());
+                    }
+
+                    @Override
+                    public void onSuccess(Forecast dataObject) {
+                        Log.i(TAG, "Weather Now Success: "+new Gson().toJson(dataObject));
+
+                        String jsonData = new Gson().toJson(dataObject);
+                        String weatherCode = null;
+                        if(dataObject.getStatus().equals("ok")){
+                            ForecastBase today = dataObject.getDaily_forecast().get(0);
+                            String date = today.getDate();
+                            String weather = today.getCond_txt_d();
+                            String max = today.getTmp_max();
+                            String min = today.getTmp_min();
+                            String temp = min+"~"+max+"℃";
+                            String windDir = today.getWind_dir();
+                            String windSc = today.getWind_sc();
+                            String wind = windDir+""+windSc+"级";
+                            testTv.setText(date+"\n"+weather+"\n"+temp+"\n"+wind);
+
+//                            String jsonDaily = new Gson().toJson(dataObject.getDaily_forecast());
+//                            JSONObject jsonObject = null;
+//                            try {
+//                                jsonObject = new JSONObject(jsonDaily);
+//                                //  读取即时天气
+//                                JSONArray jsonArray = jsonObject.getJSONArray("date");
+//                                weather = (String)jsonArray.get(0);
+//                                //  读取即时温度
+//                            } catch (JSONException e){
+//                                e.printStackTrace();
+//                            }
+                        } else {
+                            Toast.makeText(MainActivity.this, "读取天气数据不存在", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        ;
+                    }
+                });
+    }
+
 
     //  请求天气
     public void requestWeatherInfo(String cityId){
