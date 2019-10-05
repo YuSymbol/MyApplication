@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import interfaces.heweather.com.interfacesmodule.bean.Unit;
 import interfaces.heweather.com.interfacesmodule.bean.weather.forecast.Forecast;
 import interfaces.heweather.com.interfacesmodule.bean.weather.forecast.ForecastBase;
 import interfaces.heweather.com.interfacesmodule.bean.weather.now.Now;
+import interfaces.heweather.com.interfacesmodule.bean.weather.now.NowBase;
 import interfaces.heweather.com.interfacesmodule.view.HeConfig;
 import interfaces.heweather.com.interfacesmodule.view.HeWeather;
 import okhttp3.Call;
@@ -37,8 +39,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView dateTv;
     private TextView locationTv;
     private TextView weekdayTv;
+
+    private TextView tempNowTv;
+    private TextView weatherNowTv;
+
     private TextView windTv;
     private TextView tempTv;
+    private TextView weatherTv;
+
+    private ImageView weatherIv;
 
     private TextView testTv;
     private final String KEY = "69f2cb642a1646379bdb680390c377c7";  //  访问天气API的key
@@ -67,13 +76,15 @@ public class MainActivity extends AppCompatActivity {
         weekdayTv = (TextView)findViewById(R.id.tv_demo_weekday);
         testTv = (TextView)findViewById(R.id.tv_demo_test);
 
-        dateTv.setText(getFormatDate());
-        weekdayTv.setText(getWeekday());
+        tempNowTv = (TextView)findViewById(R.id.tv_demo_temperature_realtime);
+        weatherNowTv = (TextView)findViewById(R.id.tv_demo_weather_realtime);
 
+        tempTv = (TextView)findViewById(R.id.tv_demo_temperature);
+        weatherTv = (TextView)findViewById(R.id.tv_demo_weather);
+        windTv = (TextView)findViewById(R.id.tv_demo_wind);
 
+        weatherIv = (ImageView)findViewById(R.id.iv_demo_weather);
 
-        //  使用guolin提供的域名访问数据
-//        requestWeatherInfo(DAXING_ID);
 
     }
 
@@ -81,8 +92,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        dateTv.setText(getFormatDate());
+        weekdayTv.setText(getWeekday());
         //  将SDK的请求天气方法放在start环节调用
-//        requestWeatherNowBySDK(DAXING_ID);
+        requestWeatherNowBySDK(DAXING_ID);
         requestWeatherDailyBySDK(DAXING_ID);
     }
 
@@ -117,25 +130,37 @@ public class MainActivity extends AppCompatActivity {
                         String weather = null;
                         String temp = null;
                         String weatherCode = null;
+                        int resId;
                         if(dataObject.getStatus().equals("ok")){
-                            String jsonNow = new Gson().toJson(dataObject.getNow());
-                            JSONObject jsonObject = null;
-                            try {
-                                jsonObject = new JSONObject(jsonNow);
+                            NowBase now = dataObject.getNow();
+                            weatherCode = now.getCond_code();
+                            weather = now.getCond_txt();
+                            temp = now.getTmp();
 
-                                //  读取即时天气
-                                weather = jsonObject.getString("cond_txt");
-                                //  读取即时温度
-                                temp = jsonObject.getString("tmp");
-                            } catch (JSONException e){
-                                e.printStackTrace();
-                            }
+                            //  通过天气代码找到资源文件
+                            String imgName = "ic_weather_"+weatherCode;
+                            resId = getResources().getIdentifier(imgName, "drawable", "com.example.myapplication");
+                            Log.d(TAG, "onSuccess :"+resId);
+
+//                            String jsonNow = new Gson().toJson(dataObject.getNow());
+//                            JSONObject jsonObject = null;
+//                            try {
+//                                jsonObject = new JSONObject(jsonNow);
+//
+//                                //  读取即时天气
+//                                weather = jsonObject.getString("cond_txt");
+//                                //  读取即时温度
+//                                temp = jsonObject.getString("tmp");
+//                            } catch (JSONException e){
+//                                e.printStackTrace();
+//                            }
                         } else {
                             Toast.makeText(MainActivity.this, "读取天气数据不存在", Toast.LENGTH_LONG).show();
                             return;
                         }
-                        testTv.setText(weather+"\t"+temp);
-
+                        tempNowTv.setText(temp+"°");
+                        weatherNowTv.setText(weather);
+                        weatherIv.setImageResource(resId);
                     }
                 });
 
@@ -159,36 +184,30 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(Forecast dataObject) {
                         Log.i(TAG, "Weather Now Success: "+new Gson().toJson(dataObject));
 
-                        String jsonData = new Gson().toJson(dataObject);
-                        String weatherCode = null;
+//                        String jsonData = new Gson().toJson(dataObject);
+//                        String weatherCode = null;
+                        String date, weather, temp, wind = null;
                         if(dataObject.getStatus().equals("ok")){
+                            //  mini版本，只读取当日天气，近一周的天气信息后续再补充
                             ForecastBase today = dataObject.getDaily_forecast().get(0);
-                            String date = today.getDate();
-                            String weather = today.getCond_txt_d();
+                            weather = today.getCond_txt_d();
+
                             String max = today.getTmp_max();
                             String min = today.getTmp_min();
-                            String temp = min+"~"+max+"℃";
+                            temp = min+"~"+max+"℃";
+
                             String windDir = today.getWind_dir();
                             String windSc = today.getWind_sc();
-                            String wind = windDir+""+windSc+"级";
-                            testTv.setText(date+"\n"+weather+"\n"+temp+"\n"+wind);
-
-//                            String jsonDaily = new Gson().toJson(dataObject.getDaily_forecast());
-//                            JSONObject jsonObject = null;
-//                            try {
-//                                jsonObject = new JSONObject(jsonDaily);
-//                                //  读取即时天气
-//                                JSONArray jsonArray = jsonObject.getJSONArray("date");
-//                                weather = (String)jsonArray.get(0);
-//                                //  读取即时温度
-//                            } catch (JSONException e){
-//                                e.printStackTrace();
-//                            }
+                            wind = windDir+""+windSc+"级";
                         } else {
                             Toast.makeText(MainActivity.this, "读取天气数据不存在", Toast.LENGTH_LONG).show();
                             return;
                         }
-                        ;
+//                        testTv.setText(date+"\n"+weather+"\n"+temp+"\n"+wind);
+                        tempTv.setText(temp);
+                        weatherTv.setText(weather);
+                        windTv.setText(wind);
+
                     }
                 });
     }
@@ -242,19 +261,19 @@ public class MainActivity extends AppCompatActivity {
     private String convertNumToWeekday(int week){
         switch (week){
             case 1:
-                return "SUN";
+                return "Sun.";
             case 2:
-                return "MON";
+                return "Mon.";
             case 3:
-                return "TUES";
+                return "Tues.";
             case 4:
-                return "WED";
+                return "Wed.";
             case 5:
-                return "THUS";
+                return "Thus.";
             case 6:
-                return "FRI";
+                return "Fri.";
             case 7:
-                return "SAT";
+                return "Sat.";
             default:
                 Log.d(TAG, "convertNumToWeekday:week input error!");
                 return null;
