@@ -2,12 +2,14 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.service.UpdateWeatherService;
 import com.example.myapplication.util.HttpUtil;
 import com.google.gson.Gson;
 
@@ -65,12 +67,31 @@ public class MainActivity extends AppCompatActivity {
         //  在Logcat栏显示，可以通过筛选重要级别和关键字（例如类名以分类）来查看
         Log.d(TAG,"onCreate execute");
 
+        //  和风天气初始化
+        heWeatherInit();
+        //  各种控件初始化
+        viewInit();
+
+        requestWeatherNowBySDK(DAXING_ID);
+        requestWeatherDailyBySDK(DAXING_ID);
+        //  放在onCreate阶段调用以确保不会看到离线内容
+        dateTv.setText(getFormatDate());
+        weekdayTv.setText(getWeekday());
+        //  将SDK的请求天气方法放在start环节调用
+
+        Intent intent = new Intent(this, UpdateWeatherService.class);
+        startService(intent);
+
+    }
+
+    private void heWeatherInit(){
         //  和风天气api初始化
         HeConfig.init("HE1909200100361711", "69f2cb642a1646379bdb680390c377c7");
         //  免费接口要转换成免费节点
         HeConfig.switchToFreeServerNode();
+    }
 
-
+    private void viewInit(){
         dateTv = (TextView)findViewById(R.id.tv_demo_date);
         locationTv = (TextView)findViewById(R.id.tv_demo_locaiton);
         weekdayTv = (TextView)findViewById(R.id.tv_demo_weekday);
@@ -84,19 +105,12 @@ public class MainActivity extends AppCompatActivity {
         windTv = (TextView)findViewById(R.id.tv_demo_wind);
 
         weatherIv = (ImageView)findViewById(R.id.iv_demo_weather);
-
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        dateTv.setText(getFormatDate());
-        weekdayTv.setText(getWeekday());
-        //  将SDK的请求天气方法放在start环节调用
-        requestWeatherNowBySDK(DAXING_ID);
-        requestWeatherDailyBySDK(DAXING_ID);
     }
 
     //  通过SDK读取即时天气
@@ -139,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
                             //  通过天气代码找到资源文件
                             String imgName = "ic_weather_"+weatherCode;
-                            resId = getResources().getIdentifier(imgName, "drawable", "com.example.myapplication");
+                            resId = getResIdByWeatherCode(imgName);
                             Log.d(TAG, "onSuccess :"+resId);
 
 //                            String jsonNow = new Gson().toJson(dataObject.getNow());
@@ -183,10 +197,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Forecast dataObject) {
                         Log.i(TAG, "Weather Now Success: "+new Gson().toJson(dataObject));
-
-//                        String jsonData = new Gson().toJson(dataObject);
-//                        String weatherCode = null;
-                        String date, weather, temp, wind = null;
+                        String weather, temp, wind = null;
                         if(dataObject.getStatus().equals("ok")){
                             //  mini版本，只读取当日天气，近一周的天气信息后续再补充
                             ForecastBase today = dataObject.getDaily_forecast().get(0);
@@ -203,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "读取天气数据不存在", Toast.LENGTH_LONG).show();
                             return;
                         }
-//                        testTv.setText(date+"\n"+weather+"\n"+temp+"\n"+wind);
                         tempTv.setText(temp);
                         weatherTv.setText(weather);
                         windTv.setText(wind);
@@ -213,33 +223,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    //  请求天气
-    public void requestWeatherInfo(String cityId){
-
-        //  拼接url地址
-        String weatherUrl = "http://guolin.tech/api/weather?cityid="+cityId+"&key="+KEY;
-
-        HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "天气信息读取失败", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-
-                //  读取访问页面主体中的字符串部分
-                final String responseText = response.body().string();
-                Log.d(TAG, "onResponse: "+responseText);
-            }
-        });
-
+    //  设置天气图标
+    private int getResIdByWeatherCode(String imgName){
+        int resId = getResources().getIdentifier(imgName, "drawable", "com.example.myapplication");
+        return resId;
     }
 
 
