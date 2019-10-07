@@ -2,13 +2,22 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDAbstractLocationListener;
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.example.myapplication.service.UpdateTimeService;
 import com.example.myapplication.service.UpdateWeatherService;
 import com.example.myapplication.util.HttpUtil;
 import com.google.gson.Gson;
@@ -38,6 +47,8 @@ import interfaces.heweather.com.interfacesmodule.*;
 
 public class MainActivity extends AppCompatActivity {
 
+    MyTimeBroadCast myTimeBroadCast;
+
     private TextView dateTv;
     private TextView locationTv;
     private TextView weekdayTv;
@@ -57,6 +68,12 @@ public class MainActivity extends AppCompatActivity {
 
     //  输入logt，利用tab会自动补全当前的类名。更新
     private static final String TAG = "MainActivity";
+
+    //  baiduAPI的内容
+    public LocationClient mLocationClient;
+
+
+
     //  main activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,17 +88,72 @@ public class MainActivity extends AppCompatActivity {
         heWeatherInit();
         //  各种控件初始化
         viewInit();
+        //  获取并设置天气信息
+        updateWeather(DAXING_ID);
 
-        requestWeatherNowBySDK(DAXING_ID);
-        requestWeatherDailyBySDK(DAXING_ID);
-        //  放在onCreate阶段调用以确保不会看到离线内容
-        dateTv.setText(getFormatDate());
-        weekdayTv.setText(getWeekday());
-        //  将SDK的请求天气方法放在start环节调用
 
-        Intent intent = new Intent(this, UpdateWeatherService.class);
-        startService(intent);
+        //  启动自动更新服务
+//        Intent intent = new Intent(this, UpdateWeatherService.class);
+//        startService(intent);
+        //  启动更新时间服务，作为例子学习
+        //  暂时设置成了每隔30min更新一次当前天气内容
+        Intent timeService = new Intent(this, UpdateTimeService.class);
+        startService(timeService);
 
+        //  baiduAPI
+//        mLocationClient = new LocationClient(getApplicationContext());
+//        mLocationClient.registerLocationListener(new MyLocationListener());
+//        requestLocation();
+
+
+
+    }
+
+    private void requestLocation(){
+        mLocationClient.start();
+    }
+
+    //  baiduAPI
+    public class MyLocationListener extends BDAbstractLocationListener {
+
+        @Override
+        public void onReceiveLocation(BDLocation bdLocation) {
+            StringBuilder currentPosition = new StringBuilder();
+            currentPosition.append("纬度：").append(bdLocation.getLatitude()).append("\n");
+            currentPosition.append("经度：").append(bdLocation.getLongitude()).append("\n");
+            currentPosition.append("定位方式：");
+            if(bdLocation.getLocType()==BDLocation.TypeGpsLocation){
+                //  GPS定位
+                currentPosition.append("GPS");
+            } else if(bdLocation.getLocType()==BDLocation.TypeNetWorkLocation){
+                //  网络定位
+                currentPosition.append("网络");
+            }
+            testTv.setText(currentPosition);
+        }
+    }
+
+//    public static int count = 0;
+    public class MyTimeBroadCast extends BroadcastReceiver{
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            requestWeatherNowBySDK(DAXING_ID);
+//            weatherNowTv.setText(Integer.toString(count));
+//            count++;
+//            updateTime();
+        }
+    }
+
+    private void updateTime() {
+        Date date = new Date();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
+        String dateStr = dateFormat.format(date);
+        String timeStr = timeFormat.format(date);
+
+//        testTv.setText(timeStr);//显示出时间
     }
 
     private void heWeatherInit(){
@@ -107,10 +179,32 @@ public class MainActivity extends AppCompatActivity {
         weatherIv = (ImageView)findViewById(R.id.iv_demo_weather);
     }
 
+    private void updateWeather(String cityId){
+        //  获取即时天气
+        requestWeatherNowBySDK(cityId);
+        //  获取近期天气
+        requestWeatherDailyBySDK(cityId);
+        //  设置日期和星期
+//        dateTv.setText(getFormatDate());
+        weekdayTv.setText(getWeekday());
+    }
+
     @Override
     protected void onStart() {
+        myTimeBroadCast = new MyTimeBroadCast();
+        IntentFilter filter1 = new IntentFilter();
+        filter1.addAction("TIME_CHANGED_ACTION");
+        registerReceiver(myTimeBroadCast, filter1);
+//        updateTime();
         super.onStart();
 
+    }
+
+    //  停止自动更新服务
+    @Override
+    protected void onDestroy() {
+        stopService(new Intent(MainActivity.this, UpdateWeatherService.class));
+        super.onDestroy();
     }
 
     //  通过SDK读取即时天气
@@ -136,14 +230,16 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("Weather Now Error: "+new Gson());
                     }
 
+
                     @Override
                     public void onSuccess(Now dataObject) {
                         Log.i(TAG, "Weather Now Success: "+new Gson().toJson(dataObject));
 
-                        String jsonData = new Gson().toJson(dataObject);
+//                        String jsonData = new Gson().toJson(dataObject);
                         String weather = null;
                         String temp = null;
                         String weatherCode = null;
+                        String loc = dataObject.getUpdate().getLoc();
                         int resId;
                         if(dataObject.getStatus().equals("ok")){
                             NowBase now = dataObject.getNow();
@@ -172,9 +268,10 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "读取天气数据不存在", Toast.LENGTH_LONG).show();
                             return;
                         }
-                        tempNowTv.setText(temp+"°");
+                        tempNowTv.setText(temp+"°C");
                         weatherNowTv.setText(weather);
                         weatherIv.setImageResource(resId);
+//                        testTv.setText(loc);
                     }
                 });
 
@@ -197,12 +294,19 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Forecast dataObject) {
                         Log.i(TAG, "Weather Now Success: "+new Gson().toJson(dataObject));
-                        String weather, temp, wind = null;
+                        String date, weather, temp, wind = null;
                         if(dataObject.getStatus().equals("ok")){
                             //  mini版本，只读取当日天气，近一周的天气信息后续再补充
                             ForecastBase today = dataObject.getDaily_forecast().get(0);
+
+                            //  查看一下更新时间
+                            String loc = dataObject.getUpdate().getLoc();
+                            testTv.setText(loc);
+
+                            //  后续应该补充白天和晚上的区别
                             weather = today.getCond_txt_d();
 
+                            date = today.getDate();
                             String max = today.getTmp_max();
                             String min = today.getTmp_min();
                             temp = min+"~"+max+"℃";
@@ -215,8 +319,12 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
                         tempTv.setText(temp);
+                        tempTv.setTextColor(Color.WHITE);
                         weatherTv.setText(weather);
+                        weatherTv.setTextColor(Color.WHITE);
                         windTv.setText(wind);
+                        windTv.setTextColor(Color.WHITE);
+                        dateTv.setText(date);
 
                     }
                 });
