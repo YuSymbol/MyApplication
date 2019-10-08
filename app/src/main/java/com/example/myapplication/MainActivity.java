@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         //  获取近期天气
         requestWeatherDailyBySDK(cityId);
         //  设置日期和星期
-//        dateTv.setText(getFormatDate());
+        dateTv.setText(getFormatDate());
         weekdayTv.setText(getWeekday());
     }
 
@@ -324,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
                         weatherTv.setTextColor(Color.WHITE);
                         windTv.setText(wind);
                         windTv.setTextColor(Color.WHITE);
-                        dateTv.setText(date);
+//                        dateTv.setText(date);
 
                     }
                 });
